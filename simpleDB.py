@@ -12,7 +12,7 @@ class Command(object):
 	ROLLBACK – Undo all of the commands issued in the most recent transaction block, and close the block. Print nothing if successful, or print NO TRANSACTION if no transaction is in progress.
 	COMMIT – Close all open transaction blocks, permanently applying the changes made in them. Print nothing if successful, or print NO TRANSACTION if no transaction is in progress.
 	"""
-
+	
 	SET = 'SET'
 	GET = 'GET'
 	UNSET = 'UNSET'
@@ -35,8 +35,29 @@ class SimpleDB(object):
 	def run(self):
 		
 				
+	def get_command_argument(self):
 
-	def get_command_arguments(self):
+
+	def set(self):
+		pass
 	
+	def get(self):
+		pass
 
+	def unset(self):
+		pass
 
+	def numequalto(self):
+		pass
+
+	def end(self):
+		pass
+
+	def begin(self):
+		pass
+
+	def rollback(self):
+		pass
+
+	def commit(self):
+		pass
