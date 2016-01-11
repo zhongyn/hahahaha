@@ -38,41 +38,26 @@ class SimpleDB(object):
 	def __init__(self):
 		self.table = {}
 		self.cmd = None
+		self.trans_id = 0
 
-
-	def run(self, trans_id=0):
+	def run(self):
 		while True:
 			self.cmd = self.get_command()
 			
 			if self.cmd[0] == Command.END:
-				return Command.END
+				break
 			elif self.cmd[0] == Command.SET:
-				self.set(self.cmd[1], self.cmd[2], trans_id)
+				self.set(self.cmd[1], self.cmd[2])
 			elif self.cmd[0] == Command.UNSET:
-				self.unset(self.cmd[1], trans_id)
+				self.unset(self.cmd[1])
 			elif self.cmd[0] == Command.GET:
 				self.get(self.cmd[1])
 			elif self.cmd[0] == Command.BEGIN:
-				status = self.run(trans_id + 1)
-				if status == Command.END:
-					return Command.END
-				elif status == Command.ROLLBACK:
-					continue
-				elif status == Command.COMMIT and trans_id != 0:
-					return Command.COMMIT
+				self.trans_id += 1
 			elif self.cmd[0] == Command.ROLLBACK:
-				if trans_id != 0:
-					self.rollback(trans_id)
-					return Command.ROLLBACK
-				else:
-					print Command.NOTRANSACTION
+				self.rollback()
 			elif self.cmd[0] == Command.COMMIT:
-				if trans_id != 0:
-					self.commit()
-					return Command.COMMIT
-				else:
-					print Command.NOTRANSACTION
-					
+				self.commit()
 			else:
 				print 1
 
@@ -80,39 +65,49 @@ class SimpleDB(object):
 	def get_command(self):
 		return raw_input().split()
 
-	def set(self, name, val, trans_id):
+	def set(self, name, val):
 		if name in self.table:
-			if self.table[name][-1][0] == trans_id:
+			if self.table[name][-1][0] == self.trans_id:
 				self.table[name][-1][1] = val
 			else:
-				self.table[name].append([trans_id, val])
+				self.table[name].append([self.trans_id, val])
 		else:
-			self.table[name] = [[trans_id, val]]
+			self.table[name] = [[self.trans_id, val]]
 
 	
 	def get(self, name):
 		if name in self.table:
 			print self.table[name][-1][1]
 		else:
-			print 'NULL'
+			print Command.NULL
 
-	def unset(self, name, trans_id):
-		self.set(name, Command.NULL, trans_id)
+	def unset(self, name):
+		self.set(name, Command.NULL)
 			
 	def numequalto(self):
 		pass
 
-	def rollback(self, trans_id):
-		for name in self.table.keys():
-			if self.table[name][-1][0] == trans_id:
-				if len(self.table[name]) == 1:
-					del self.table[name]
-				else:
-					self.table[name].pop()
+	def rollback(self):
+		if self.trans_id != 0:
+			for name in self.table.keys():
+				if self.table[name][-1][0] == self.trans_id:
+					if len(self.table[name]) == 1:
+						del self.table[name]
+					else:
+						self.table[name].pop()
+			self.trans_id -= 1
+		else:
+			print Command.NOTRANSACTION
+
 
 	def commit(self):
-		for name, val in self.table.iteritems():
-			self.table[name] = self.table[name][-1]
+		if self.trans_id != 0:
+			for name, val in self.table.iteritems():
+				self.table[name] = val[-1:]
+			self.trans_id = 0
+		else:
+			print Command.NOTRANSACTION
+
 
 def main():
 	db = SimpleDB()
