@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from sys import stdin
-
-
 class Command(object):
 	"""
 	@class Command
