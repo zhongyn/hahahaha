@@ -78,9 +78,9 @@ class SimpleDB(object):
         """
         while True:
             cmd = self.get_command()
-            if not self.is_valid_cmd(cmd):
-                print "Invalid command"
-                continue
+            # if not self.is_valid_cmd(cmd):
+            #     print "Invalid command"
+            #     continue
             if cmd[0] == Command.END:
                 break
             elif cmd[0] == Command.SET:
@@ -218,7 +218,6 @@ class SimpleDB(object):
         if (cmd[0] in Command.zero_arg_cmds and len(cmd) == 1) or (cmd[0] in Command.one_arg_cmds and len(cmd) == 2) or (cmd[0] in Command.two_arg_cmds and len(cmd) == 3):
             return True
         return False
-
 
 
 def main():
