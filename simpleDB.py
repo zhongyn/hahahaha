@@ -30,6 +30,34 @@ class SimpleDB(object):
     """
     @class SimpleDB
     A simple in-memory database, receives commands via standard input and writes response to standard output.
+    
+    Data structure for storing (name, val) and (val, count):
+    table = {name_1: [[trans_id_1, val_1], [trans_id_2, val_2], ...];
+             name_2: [[trans_id_1, val_1], [trans_id_2, val_2], ...];
+             ...
+             ...
+             ...
+            }
+            
+    counts = {val_1: [[trans_id_1, count_1], [trans_id_2, count_2], ...];
+              val_2: [[trans_id_1, count_1], [trans_id_2, count_2], ...];
+              ...
+              ...
+              ...
+             }
+    
+    For example:
+    table = {a: [[0, 2], [3, 5], [4, 10]];
+             b: [[2, 5], [2, 88]]
+            }
+
+    The corresponding counts:
+    counts = {2: [[0, 1]];
+              5: [[2, 1], [3, 2]];
+              10: [[4, 1]];
+              88: [[2, 1]]
+             }
+
     """
 
     def __init__(self):
@@ -50,6 +78,8 @@ class SimpleDB(object):
                 self.unset(self.cmd[1])
             elif self.cmd[0] == Command.GET:
                 self.get(self.cmd[1])
+            elif self.cmd[0] == Command.NUMEQUALTO:
+                self.numequalto(self.cmd[1])
             elif self.cmd[0] == Command.BEGIN:
                 self.trans_id += 1
             elif self.cmd[0] == Command.ROLLBACK:
@@ -65,13 +95,15 @@ class SimpleDB(object):
 
     def set(self, name, val):
         if name in self.table:
+            self.update_counts(self.table[name][-1][1], -1)
             if self.table[name][-1][0] == self.trans_id:
-                self.update_counts(self.table[name][-1][1], val)
                 self.table[name][-1][1] = val
-            else:
+            else:               
                 self.table[name].append([self.trans_id, val])
         else:
             self.table[name] = [[self.trans_id, val]]
+        
+        self.update_counts(val, 1)
 
     
     def get(self, name):
@@ -82,35 +114,51 @@ class SimpleDB(object):
 
     def unset(self, name):
         self.set(name, Command.NULL)
-            
-    def numequalto(self, name):
-        print self.counts.get(name, 0)
 
-    def update_counts(self, old_val, new_val):
-        self.counts[old_val] -= 1
-        self.counts[new_val] += 1
-        
+            
+    def numequalto(self, val):
+        if val in self.counts:
+            print self.counts[val][-1][1]
+        else:
+            print 0
+
+    def update_counts(self, val, change):
+        if val in self.counts:
+            if self.trans_id == self.counts[val][-1][0]:
+                self.counts[val][-1][1] += change
+            else:
+                self.counts[val].append([self.trans_id, self.counts[val][-1][1]+change])
+        else:
+            self.counts[val] = [[self.trans_id, change]]
+
     def rollback(self):
         if self.trans_id != 0:
-            for name in self.table.keys():
-                if self.table[name][-1][0] == self.trans_id:
-                    if len(self.table[name]) == 1:
-                        del self.table[name]
-                    else:
-                        self.table[name].pop()
+            self.del_last_trans(self.table)
+            self.del_last_trans(self.counts)
             self.trans_id -= 1
         else:
             print Command.NOTRANSACTION
 
-
+    def del_last_trans(self, data):
+        for name in data.keys():
+             if data[name][-1][0] == self.trans_id:
+                 if len(data[name]) == 1:
+                     del data[name]
+                 else:
+                     data[name].pop()
+        
     def commit(self):
         if self.trans_id != 0:
-            for name, val in self.table.iteritems():
-                self.table[name] = val[-1:]
+            self.save_latest_data(self.table)
+            self.save_latest_data(self.counts)
             self.trans_id = 0
         else:
             print Command.NOTRANSACTION
 
+    def save_latest_data(self, data):
+        for name, val in data.iteritems():
+            data[name] = val[-1:]
+        
 
 def main():
     db = SimpleDB()
