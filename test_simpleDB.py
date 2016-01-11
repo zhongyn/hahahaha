@@ -10,6 +10,10 @@ class SimpleDBTestCase(unittest.TestCase):
     """
 
     def setUp(self):
+        """
+        @fn setUp
+        Creates variables used by the test cases.
+        """
         self.db = SimpleDB()
         self.set_a_10 = ['SET', 'a', '10']
         self.set_a_20 = ['SET', 'a', '20']
@@ -26,6 +30,7 @@ class SimpleDBTestCase(unittest.TestCase):
         self.commit = ['COMMIT']
         self.end = ['END']
 
+        # Mock the func get_command() and std output
         self.patcher_get_cmd = patch('simpleDB.SimpleDB.get_command')
         self.patcher_output = patch('sys.stdout', new_callable=StringIO)
         self.mock_cmd = self.patcher_get_cmd.start()
@@ -35,7 +40,7 @@ class SimpleDBTestCase(unittest.TestCase):
         self.patcher_get_cmd.stop()
         self.patcher_output.stop()
     
-    def test_set_var_get_var(self):
+    def test_set_get(self):
         """
         SET a 10
         GET a       => 10
@@ -54,7 +59,7 @@ class SimpleDBTestCase(unittest.TestCase):
         self.db.run()
         self.assertEqual('NULL\n', self.mock_output.getvalue())
 
-    def test_set_var_unset_var_get_var(self):
+    def test_unset_var_get_NULL(self):
         """
         SET a 10
         UNSET a
@@ -133,6 +138,15 @@ class SimpleDBTestCase(unittest.TestCase):
         self.db.run()
         self.assertEqual('20\nNO TRANSACTION\n', self.mock_output.getvalue())
 
+    def test_commit_no_transaction(self):
+        """
+        SET a 10
+        COMMIT      => NO TRANSACTION
+        END
+        """
+        self.mock_cmd.side_effect = [self.set_a_10, self.commit, self.end]
+        self.db.run()
+        self.assertEqual('NO TRANSACTION\n', self.mock_output.getvalue())
 
     def test_unset_rollback_commit(self):
         """
@@ -186,6 +200,7 @@ class SimpleDBTestCase(unittest.TestCase):
         self.mock_cmd.side_effect = [self.set_a_10, self.begin, self.set_a_20, self.begin, self.set_a_30, self.commit, self.numequalto_10, self.numequalto_20, self.numequalto_30, self.end]
         self.db.run()
         self.assertEqual('0\n0\n1\n', self.mock_output.getvalue())
+
 
 
 if __name__ == '__main__':
