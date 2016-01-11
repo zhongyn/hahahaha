@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+
+from sys import stdin
+
+
 class Command(object):
 	"""
 	@class Command
@@ -12,7 +17,7 @@ class Command(object):
 	ROLLBACK – Undo all of the commands issued in the most recent transaction block, and close the block. Print nothing if successful, or print NO TRANSACTION if no transaction is in progress.
 	COMMIT – Close all open transaction blocks, permanently applying the changes made in them. Print nothing if successful, or print NO TRANSACTION if no transaction is in progress.
 	"""
-	
+
 	SET = 'SET'
 	GET = 'GET'
 	UNSET = 'UNSET'
@@ -31,21 +36,39 @@ class SimpleDB(object):
 
 	def __init__(self):
 		self.table = {}
+		self.cmd = None
 
 	def run(self):
-		
-				
-	def get_command_argument(self):
+		local_table = {}
+		while True:
+			self.cmd = self.get_command()
+			
+			if self.cmd[0] == Command.END:
+				break;
+			elif self.cmd[0] == Command.SET:
+				self.set(local_table, self.cmd[1], self.cmd[2])
+			elif self.cmd[0] == Command.UNSET:
+				self.unset(local_table, self.cmd[1])
+			elif self.cmd[0] == Command.GET:
+				self.get(local_table, self.cmd[1])
+			else:
+				print 1
 
 
-	def set(self):
-		pass
+	def get_command(self):
+		return raw_input().split()
+
+	def set(self, table, name, val):
+		table[name] = val
 	
-	def get(self):
-		pass
+	def get(self, table, name):
+		if name in table:
+			print table[name]
+		else:
+			print 'NULL'
 
-	def unset(self):
-		pass
+	def unset(self, table, name):
+		table.pop(name, None)
 
 	def numequalto(self):
 		pass
@@ -61,3 +84,10 @@ class SimpleDB(object):
 
 	def commit(self):
 		pass
+
+def main():
+	db = SimpleDB()
+	db.run()
+
+if __name__ == '__main__':
+	main()
