@@ -1,7 +1,7 @@
 import unittest
 from mock import patch
 from StringIO import StringIO
-from simpleDB import SimpleDB, Command
+from simpleDB import SimpleDB
 
 class SimpleDBTestCase(unittest.TestCase):
     """
